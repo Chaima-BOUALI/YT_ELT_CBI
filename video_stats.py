@@ -1,9 +1,13 @@
 #Importing requests liberary 
 import requests
 import json
+import os
+from dotenv import load_dotenv
+load_dotenv(dotenv_path="./.env")
 #Adding URL to make requests 
 #Setting URL VARiables
-API_Key="AIzaSyC7iq85pKbLp3_jjvb68JJkuCZPbxNtTo4"
+#os command gets the env variables 
+API_Key= os.getenv("API_Key")
 CHANNEL_Handle="MrBeast"
 part="contentDetails"
 
