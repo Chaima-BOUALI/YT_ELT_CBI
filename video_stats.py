@@ -1,6 +1,7 @@
 #Importing requests liberary 
 import requests
 import json
+from datetime import date 
 import os
 from dotenv import load_dotenv
 load_dotenv(dotenv_path="./.env")
@@ -37,11 +38,11 @@ def get_playlist_id():
         channel_playListID=channel_Items["contentDetails"]["relatedPlaylists"]["uploads"]
         channel_playList_Likes=channel_Items["contentDetails"]["relatedPlaylists"]["likes"]
 
-        print("channel items are :", channel_Items)
-        print("channel kind is :",channel_Kind)
-        print("channel id is : ",channel_ID)
-        print("PlayList id is : ", channel_playListID)
-        print("PlayList likes are : ", channel_playList_Likes)
+        #print("channel items are :", channel_Items)
+        #print("channel kind is :",channel_Kind)
+        #print("channel id is : ",channel_ID)
+        #print("PlayList id is : ", channel_playListID)
+        #print("PlayList likes are : ", channel_playList_Likes)
         return channel_Items,channel_Kind,channel_ID,channel_playListID,channel_playList_Likes
 
     except requests.exceptions.RequestException as ERR:
@@ -75,7 +76,7 @@ def get_video_id(playList_id):
             pageToken=data.get("nextPageToken")
             if not pageToken: 
                 break        
-        print("the list of video ids in this playList is :" , video_ids)
+        #print("the list of video ids in this playList is :" , video_ids)
         return(video_ids)        
     except requests.exceptions.RequestException as ERR:
         raise ERR
@@ -129,6 +130,15 @@ def extract_video_data(video_ids):
     except requests.exceptions.RequestException as ERR:
             raise ERR
 
+#This function will take what we return in the previous function and locally save it in a JSON format in our machine 
+def save_to_JSON(extracted_data):
+    file_path=f"./data/YT_ELT_CBI{date.today()}.json"
+    #Context manager apports CRUDS to files W for write R to read etc..
+    with open(file_path, "w", encoding="utf-8") as json_outfile:
+        json.dump(extracted_data,json_outfile,indent=4, ensure_ascii=False)
+
+
+
 #Script is run directly and not imported as a module 
 #If we will run this script from another script => Not run directly so name will not be equals main but equals the name of the file.py
 if __name__=="__main__": 
@@ -136,6 +146,8 @@ if __name__=="__main__":
     playList_id=get_playlist_id()
     #print(playList_id)
     video_ids=get_video_id(playList_id)
-    print(extract_video_data(video_ids))
+    #print(extract_video_data(video_ids))
+    video_data=extract_video_data(video_ids)
+    save_to_JSON(video_data)
 else:
     print ("The function get playlist id will not be excecuted")
