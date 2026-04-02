@@ -10,6 +10,8 @@ load_dotenv(dotenv_path="./.env")
 API_Key= os.getenv("API_Key")
 CHANNEL_Handle="MrBeast"
 part="contentDetails"
+part_two = "snippet"
+part_three ="statistics"
 playListID ='UUX6OQ3DkcsbYNE6H8uQQuVA'
 maxResults = 50
 
@@ -64,12 +66,10 @@ def get_video_id(playList_id):
             data = response.json()
             #json.dumps() converts a Python object into a JSON formatted string
             #print(json.dumps(data,indent=4))
-            print("Where am I 1 ")
             #We will Loop through items and get every video id from the lists and stock it in the ideo_ids[] List that is initially empty
             for item in data.get("items", []):
-                print("Where am I 2 ")
                 video_id = item["contentDetails"]["videoId"]
-                print("this is the video id: ", video_id)
+                #print("this is the video id: ", video_id)
                 video_ids.append(video_id)
 
             pageToken=data.get("nextPageToken")
@@ -82,12 +82,60 @@ def get_video_id(playList_id):
 
 
 
+def extract_video_data(video_ids): 
+    extracted_data=[]
+
+
+    ##Now we need a function that will use the video_ids to return video details 
+    #First we need to split video_ids list to wideo ideas 
+
+    def batch_list(video_id_list, batch_size): 
+        for video_id in range(0,len(video_id_list),batch_size):
+            #Yield is a function that returns a value pauses the func remembers its state and then resumes where it left off
+            yield video_id_list[video_id : video_id + batch_size]
+
+
+    try: 
+        #Look through the batch values 
+        for batch in batch_list(video_ids,maxResults): 
+            video_ids_str=",".join(batch)
+            url =f'https://youtube.googleapis.com/youtube/v3/videos?part={part}&part={part_two}&part={part_three}&id={video_ids_str}&key={API_Key}'
+            response = requests.get(url)
+            #print(response)
+            response.raise_for_status
+            #Parsing response using JSON
+            data = response.json()
+            #json.dumps() converts a Python object into a JSON formatted string
+            #print(json.dumps(data,indent=4))
+            for item in data.get('items',[]):
+                video_id = item['id']
+                snippet = item['snippet']
+                contentDetails = item['contentDetails'] 
+                statistics=item['statistics']
+            #Defining a dictionnary that will contain all the variables we're looking for 
+                video_data = {
+                    "video_id" : video_id,
+                    "title" : snippet['title'], 
+                    "publishedAT" : snippet['publishedAt'],
+                    "duration" : contentDetails['duration'], 
+                    "viewCount" : statistics.get('viewCount', None), 
+                    "likeCount" : statistics.get('likeCount', None), 
+                    "commentCount" : statistics.get('commentCount', None)
+                }
+                    
+                    
+                extracted_data.append(video_data)
+        return extracted_data
+    except requests.exceptions.RequestException as ERR:
+            raise ERR
+
 #Script is run directly and not imported as a module 
 #If we will run this script from another script => Not run directly so name will not be equals main but equals the name of the file.py
 if __name__=="__main__": 
     print ("The function get playlist id will be excecuted")
     playList_id=get_playlist_id()
-    print(playList_id)
-    print(get_video_id(playList_id))
+    #print(playList_id)
+    video_ids=get_video_id(playList_id)
+    print(extract_video_data(video_ids))
 else:
     print ("The function get playlist id will not be excecuted")
